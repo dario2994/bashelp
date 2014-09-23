@@ -1,0 +1,276 @@
+24
+
+cal
+Mostra un calendario
+6
+cal
+calendario
+data
+giorno
+mese
+anno
+
+watch -d -n 1.5 COMANDO
+Ripete il COMANDO ogni secondo e mezzo
+5
+watch
+ripetizione
+ripetere
+intervallo
+tempo
+
+cat FILE1 FILE2
+Concatena file e li stampa in output, al posto di un file si può usare - che sta per standard input
+7
+cat
+concatenare
+unire
+stampare
+leggere
+file
+testo
+
+tree
+Elenca l'albero delle cartelle
+8
+tree
+albero
+elenco
+directory
+cartelle
+file
+files
+cartella
+
+htop
+Elenca i processi e dà la possibilita di killarli
+6
+htop
+top
+processi
+processo
+kill
+killare
+
+ls -lah
+Stampa tutti i file nella cartella con dettagli
+12
+ls
+permessi
+dettagli
+file
+cartelle
+nascosti
+dimensioni
+elenco
+nascosto
+cartella
+permesso
+dimensione
+
+chown UTENTE FILE
+Cambia ad UTENTE il proprietario di FILE
+5
+chown
+proprietario
+permessi
+cambio
+proprietari
+
+chmod 777 FILE
+Mette tutti i permessi a FILE
+3
+chmod
+permessi
+permesso
+
+arecord FILE
+Registra l'audio su FILE (buona scelta usare FILE.wav) fino a che non si preme ctrl+c
+5
+arecord
+registrare
+registrazione
+microfono
+audio
+
+aplay FILE
+Esegue il file audio FILE (funziona con .wav) dal terminale
+9
+aplay
+eseguire
+suono
+audio
+play
+suonare
+canzone
+cuffie
+casse
+
+eog IMMAGINE
+Apre l'immagine IMMAGINE
+9
+eog
+immagine
+foto
+immagini
+jpeg
+jpg
+aprire
+vedere
+guardare
+
+ssh -X UTENTE@HOST
+Apre una connessione ssh con schermo (cioè si possono eseguire applicazioni grafiche vedendole)
+4
+ssh
+schermo
+connessione
+interfaccia
+
+xrandr -o (0,1,2,3)
+Cambia l'orientamente dello schermo; dove 0 è l'orientamento corretto
+7
+xrandr
+schermo
+orientamento
+ruotare
+rotazione
+girare
+rovesciare
+
+md5sum FILE
+Restituisce l'md5 di FILE
+6
+md5sum
+md5
+hash
+crypt
+crittografia
+hashing
+
+sudo apt-get remove --purge PACCHETTO
+Disinstalla e rimuove completamente il PACCHETTO 
+9
+apt-get
+apt
+synaptics
+disinstallazione
+pacchetto
+rimozione
+disinstallare
+rimuovere
+cancellare
+
+grep -F 'STRINGA' FILE
+Cerca la stringa STRINGA in FILE
+8
+grep
+cerca
+ricerca
+trova
+trovare
+cercare
+parola
+stringa
+
+grep -i -F 'STRINGA' FILE
+Cerca la stringa STRINGA in FILE senza badare ai casi delle lettere
+14
+grep
+cerca
+ricerca
+trova
+trovare
+cercare
+parola
+stringa
+insensitive
+casi
+maiuscolo
+minuscolo
+minuscole
+maiuscole
+
+grep -P 'REGEXP' FILE
+Cerca l'espressione regolare REGEXP in FILE
+10
+grep
+regexp
+espressione
+regolare
+cerca
+ricerca
+trova
+trovare
+cercare
+pattern
+
+less FILE
+Legge e mostra un file in modalità interattiva. Comodo il fatto che se una volta aperto il file si scrive /STRINGA tale stringa viene ricercata e se poi si preme 'n' si va all'occorrenza successiva
+7
+less
+leggere
+mostrare
+cercare
+visualizzare
+righe
+testo
+
+g++  -Wall -std=gnu++0x -g -o ESEGUIBILE SORGENTE
+Compila un sorgente c++ in modo che sia possibile fare debug
+9
+g++
+gcc
+compilare
+compilazione
+c++
+C++
+eseguibile
+debug
+debuggare
+
+g++ -Wall -std=gnu++0x -O3 -o ESEGUIBILE SORGENTE
+Compila un sorgente c++ con ottimizzazioni
+10
+g++
+gcc
+compilare
+compilazione
+c++
+C++
+eseguibile
+ottimizzato
+ottimizzazione
+O3
+
+nautilus .
+Apre una finestra del filemanager nautilus nella cartella attuale
+5
+nautilus
+cartella
+posizione
+visualizzazione
+filemanager
+
+sudo mount /dev/sdxx Cartella
+Monta il device /dev/sdxx nella directory Cartella
+6
+mount
+montare
+device
+chiavetta
+hard-disk
+usb
+
+exiftran -a IMMAGINE
+Automaticamente ruota l'immagine nell'orientamento corretto.
+9
+exiftran
+exif
+ruotare
+rotazione
+immagine
+foto
+orientamento
+orientazione
+orientare
