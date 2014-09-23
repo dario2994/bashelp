@@ -48,6 +48,13 @@ def DatabaseAddTag(dbConnection, tag, commandId): #non controlla che commandId e
 	db=dbConnection.cursor()
 	db.execute("INSERT INTO Tags (tag,commandId) VALUES(?,?)",(tag, commandId))
 	return db.lastrowid
+	
+def DatabaseCommandSimilarity(dbConnection, command): #Ci sono molte euristiche papabili per valutare la somiglianza! Questa è proprio di base
+	db=dbConnection.cursor()
+	prefixLength=min(len(command)//2, 4)
+	#~ print( command[:prefixLength]+'%' )
+	return db.execute("SELECT rowid,command,description FROM Commands WHERE command LIKE ?", (command[:prefixLength]+'%',)).fetchall()
+	
 
 ISTTY=sys.stdout.isatty()
 COLOR_BLUE='\033[94m' if ISTTY else ''
@@ -65,19 +72,45 @@ def ColorPrint( string , color, prefix='', suffix='' ): #Non è facile usarlo pe
 		color=COLOR_DEFAULT	
 	print(prefix+color+string+COLOR_DEFAULT+suffix)	
 	
-def PrintCommand(dbConnection, commandId, ShowTags): #Non controlla che il comando esista
-	db=dbConnection.cursor()
-	(command,description)=db.execute('SELECT command, description FROM Commands WHERE rowid=?',(commandId,)).fetchone()
+def PrintCommand(commandId, command, description='', tags=[], ShowTags=False):
 	ColorPrint( str(commandId), 'red', '', ': '+command )
 	descriptionPrefix='\t'
 	descriptionWrapper=textwrap.TextWrapper(initial_indent=descriptionPrefix, subsequent_indent=' '*(len(textwrap.fill(descriptionPrefix+'$',replace_whitespace=False))-1), width=70)
-	ColorPrint( descriptionWrapper.fill( description ), 'blue' )
+	if description!='':
+		ColorPrint( descriptionWrapper.fill( description ), 'blue' )
 	if ShowTags:
-		allTags=map(lambda x: COLOR_GREEN+x[0]+COLOR_DEFAULT,db.execute('SELECT tag FROM Tags WHERE commandId=?',(commandId,)).fetchall())
+		coloredTags=map(lambda tag: COLOR_GREEN+tag+COLOR_DEFAULT,tags)
 		tagsPrefix='\tTags: '
 		tagsWrapper=textwrap.TextWrapper(initial_indent=tagsPrefix, subsequent_indent=' '*(len(textwrap.fill(tagsPrefix+'$',replace_whitespace=False))-1), width=90)
-		print( tagsWrapper.fill(', '.join(allTags)) )
+		print( tagsWrapper.fill(', '.join(coloredTags)) )
 	print('')
+	
+def PrintCommandFromDatabase(dbConnection, commandId, ShowTags=False): #Non controlla che il comando esista
+	db=dbConnection.cursor()
+	(command,description)=db.execute('SELECT command, description FROM Commands WHERE rowid=?',(commandId,)).fetchone()
+	if ShowTags:
+		tags=list( map(lambda x: x[0],db.execute('SELECT tag FROM Tags WHERE commandId=?',(commandId,)).fetchall()) )
+		PrintCommand(commandId,command,description,tags,True)
+	else:
+		PrintCommand(commandId,command,description)
+
+def CheckSimilarity(dbConnection, command, description):
+	similarCommands=DatabaseCommandSimilarity(dbConnection, command)
+	print(similarCommands)	
+	if not similarCommands:
+		return 1
+	
+	print("The command you want to add is:")
+	PrintCommand('TOADD', command, description)
+	print("But these commands, already saved, seems similar to the one you want to add:")
+	for (commandId1,command1,description1) in similarCommands:
+		PrintCommand(commandId1, command1, description1)
+	
+	userAnswer=input("Do you want to add it anyway? (yes,no) ").lstrip().rstrip()
+	while userAnswer!='yes' and userAnswer!='no' : #Magari dopo 3 volte uscire e amen
+		ColorPrint("The only possible answers are yes and no.",'red')
+		userAnswer=input("Do you want to add it anyway? (yes,no) ").lstrip().rstrip()
+	return (userAnswer=='yes')
 
 COMMAND_TXT='Command: '
 DESCRIPTION_TXT='Description: '
@@ -89,11 +122,15 @@ def AddCommandFromFile( dbConnection, commandId, fileName ):
 	description=( inputFile.readline().rstrip() )[len(DESCRIPTION_TXT)-1:].lstrip()
 	if len(command)==0:
 		ColorPrint( 'The command must contain at least 1 character.' , 'red')
+		inputFile.close()
 		return -1
 	if len(description)<5:
 		ColorPrint( 'The description must contain at least 5 characters.' , 'red')
+		inputFile.close()
 		return -1
-	
+	if not CheckSimilarity(dbConnection, command, description):
+		inputFile.close()
+		return -1
 	inputFile.readline()
 	tags=[]
 	for line in inputFile:
@@ -208,6 +245,7 @@ def QuietInstall():
 def Import( fileName ): #Non controlla se sono già presenti i comandi
 	inputFile=open( fileName )
 	commandsNumber=int( inputFile.readline() )
+	importedCommandsNumber=0
 	print( 'There are '+str(commandsNumber)+' commands to be imported:' )
 	inputFile.readline()
 	
@@ -215,7 +253,6 @@ def Import( fileName ): #Non controlla se sono già presenti i comandi
 	
 	for i in range(commandsNumber):
 		command=inputFile.readline().rstrip().lstrip()
-		print( command )
 		description=inputFile.readline().rstrip().lstrip()
 		if not command:
 			ColorPrint( "The "+str(i)+"-th command doesn't contain any characters, then the command is skipped." ,'red' )
@@ -223,21 +260,30 @@ def Import( fileName ): #Non controlla se sono già presenti i comandi
 		if len(description)<5:
 			ColorPrint( "The description of the "+str(i)+"-th command is shorter than 5 characters, then the command is skipped." ,'red' )
 			continue
-		commandId=DatabaseAddCommand(dbConnection, -1, command, description)
+			
+		toBeAdded=CheckSimilarity(dbConnection, command, description)
+		commandId=0
+		if toBeAdded:
+			commandId=DatabaseAddCommand(dbConnection, -1, command, description)
 		
 		n=int(inputFile.readline())
 		for j in range(n):
 			tag=inputFile.readline().rstrip().lstrip()
+			if not toBeAdded:
+				continue
 			if not tag:
 				ColorPrint( "The "+str(j)+"-th tag of the "+str(i)+"-th command doesn't contain any characters, then the tag is skipped." , 'red')
 				continue
 			DatabaseAddTag(dbConnection, tag, commandId)
+		ColorPrint(command,'blue','The command ',' was'+('' if toBeAdded else ' not')+' added.')
+		if toBeAdded:
+			importedCommands+=1
 		inputFile.readline()
 	
 	dbConnection.commit()
 	dbConnection.close()
 	inputFile.close();
-	ColorPrint('The file '+fileName+' has been successfully imported.', 'green')
+	ColorPrint(str(importedNumber)+' commands were imported from the file '+fileName+'.', 'green')
 
 def Export( fileName ): 
 	outputFile=open(fileName,'w+')
@@ -267,7 +313,7 @@ def Add():
 	commandId=AddCommandFromFile(dbConnection, -1, TMPFILE_PATH)
 	if commandId!=-1:
 		print( 'The following command has been added: ' )
-		PrintCommand(dbConnection, commandId, 1)
+		PrintCommandFromDatabase(dbConnection, commandId, 1)
 	dbConnection.commit()
 	dbConnection.close()
 	os.remove(TMPFILE_PATH)
@@ -286,6 +332,7 @@ def Modify(commandId):
 	dbConnection=OpenDatabase()
 	if not DatabaseCommandExists(dbConnection, commandId):
 		ColorPrint( "The command "+str(commandId)+" doesn't exist." , 'red')
+		dbConnection.close()
 		return 1
 	
 	WriteCommandToFile(dbConnection, commandId, TMPFILE_PATH)
@@ -296,7 +343,7 @@ def Modify(commandId):
 	
 	if commandId!=-1:
 		print( 'The command has been modified successfully: ' )
-		PrintCommand(dbConnection, commandId, 1)
+		PrintCommandFromDatabase(dbConnection, commandId, 1)
 	
 	dbConnection.commit()
 	dbConnection.close()
@@ -308,7 +355,7 @@ def Show():
 	allCommands=db.execute('SELECT rowid FROM Commands').fetchall()
 	
 	for (commandId,) in allCommands:
-		PrintCommand(dbConnection,commandId,1)
+		PrintCommandFromDatabase(dbConnection,commandId,1)
 		
 	if not allCommands:
 		ColorPrint( "There aren't commands saved. To add a command use "+PROGRAM_NAME+" --add", 'red' )
@@ -322,7 +369,7 @@ def Search( commandTag ):
 	commandIdList=set( db.fetchall() )
 	
 	for (commandId,) in commandIdList:
-		PrintCommand(dbConnection, commandId, 0)
+		PrintCommandFromDatabase(dbConnection, commandId, 0)
 	
 	if not commandIdList:
 		ColorPrint( "No command matches the tag searched." , 'red' )
@@ -332,6 +379,7 @@ def Search( commandTag ):
 #Magari aggiungere un database reset? Bah
 #Controllare la sicurezza del tutto e testare grandemente todos!
 #Mettere a posto gli a capo generali!
+#Da gestire meglio dbConnection!!
 
 if __name__=='__main__':
 	QuietInstall()
