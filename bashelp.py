@@ -19,19 +19,19 @@ TMPFILE_PATH='/tmp/'+PROGRAM_NAME+'_TempCommandFile.txt'
 #~ Funzioni in maiuscolo, il resto in camelcase con l'iniziale minuscola 
 #~ Tabelle in maiuscolo, colonne in camelcase con l'iniziale minuscola 
 
+global dbConnection, db
+
 def OpenDatabase():
+	global dbConnection, db
 	dbConnection=sqlite3.connect(DATABASE_PATH)
 	db=dbConnection.cursor()
 	db.execute('PRAGMA foreign_keys=ON')
-	return dbConnection
 
-def DatabaseCommandExists(dbConnection, commandId):
-	db=dbConnection.cursor()
+def DatabaseCommandExists(commandId):
 	exists=db.execute('SELECT count(*) FROM Commands WHERE rowid=?',(commandId,)).fetchone()[0]
 	return (False, True)[exists]
 	
-def DatabaseAddCommand(dbConnection, commandId, command, description):
-	db=dbConnection.cursor()
+def DatabaseAddCommand(commandId, command, description):
 	if commandId!=-1: 
 		db.execute('INSERT INTO Commands (rowid,command,description) VALUES(?,?,?)', (commandId, command, description))
 	else:
@@ -39,18 +39,15 @@ def DatabaseAddCommand(dbConnection, commandId, command, description):
 	commandId=db.lastrowid
 	return commandId
 	
-def DatabaseRemoveCommand(dbConnection, commandId): #non controlla che commandId esista
-	db=dbConnection.cursor()
+def DatabaseRemoveCommand(commandId): #non controlla che commandId esista
 	db.execute('DELETE FROM Commands WHERE rowid=?',(commandId,)) #A cascata dovrebbe togliere tutti i tag corrispondenti
 	return 0
 	
-def DatabaseAddTag(dbConnection, tag, commandId): #non controlla che commandId esista
-	db=dbConnection.cursor()
+def DatabaseAddTag(tag, commandId): #non controlla che commandId esista
 	db.execute("INSERT INTO Tags (tag,commandId) VALUES(?,?)",(tag, commandId))
 	return db.lastrowid
 	
-def DatabaseCommandSimilarity(dbConnection, command): #Ci sono molte euristiche papabili per valutare la somiglianza! Questa è proprio di base
-	db=dbConnection.cursor()
+def DatabaseCommandSimilarity(command): #Ci sono molte euristiche papabili per valutare la somiglianza! Questa è proprio di base
 	prefixLength=min(len(command)//2, 4)
 	#~ print( command[:prefixLength]+'%' )
 	return db.execute("SELECT rowid,command,description FROM Commands WHERE command LIKE ?", (command[:prefixLength]+'%',)).fetchall()
@@ -85,8 +82,7 @@ def PrintCommand(commandId, command, description='', tags=[], ShowTags=False):
 		print( tagsWrapper.fill(', '.join(coloredTags)) )
 	print('')
 	
-def PrintCommandFromDatabase(dbConnection, commandId, ShowTags=False): #Non controlla che il comando esista
-	db=dbConnection.cursor()
+def PrintCommandFromDatabase(commandId, ShowTags=False): #Non controlla che il comando esista
 	(command,description)=db.execute('SELECT command, description FROM Commands WHERE rowid=?',(commandId,)).fetchone()
 	if ShowTags:
 		tags=list( map(lambda x: x[0],db.execute('SELECT tag FROM Tags WHERE commandId=?',(commandId,)).fetchall()) )
@@ -94,15 +90,14 @@ def PrintCommandFromDatabase(dbConnection, commandId, ShowTags=False): #Non cont
 	else:
 		PrintCommand(commandId,command,description)
 
-def CheckSimilarity(dbConnection, command, description):
-	similarCommands=DatabaseCommandSimilarity(dbConnection, command)
-	print(similarCommands)	
+def CheckSimilarity(command, description):
+	similarCommands=DatabaseCommandSimilarity(command)
 	if not similarCommands:
 		return 1
 	
 	print("The command you want to add is:")
 	PrintCommand('TOADD', command, description)
-	print("But these commands, already saved, seems similar to the one you want to add:")
+	print("but it seems similar to these commands:")
 	for (commandId1,command1,description1) in similarCommands:
 		PrintCommand(commandId1, command1, description1)
 	
@@ -115,7 +110,7 @@ def CheckSimilarity(dbConnection, command, description):
 COMMAND_TXT='Command: '
 DESCRIPTION_TXT='Description: '
 TAGS_TXT='Tags (each tag on a new line, starting from next line):\n'
-def AddCommandFromFile( dbConnection, commandId, fileName ):
+def AddCommandFromFile( commandId, fileName ):
 	inputFile=open(fileName)
 	
 	command=( inputFile.readline().rstrip() )[len(COMMAND_TXT)-1:].lstrip()
@@ -128,7 +123,7 @@ def AddCommandFromFile( dbConnection, commandId, fileName ):
 		ColorPrint( 'The description must contain at least 5 characters.' , 'red')
 		inputFile.close()
 		return -1
-	if not CheckSimilarity(dbConnection, command, description):
+	if not CheckSimilarity(command, description):
 		inputFile.close()
 		return -1
 	inputFile.readline()
@@ -143,17 +138,14 @@ def AddCommandFromFile( dbConnection, commandId, fileName ):
 		ColorPrint( 'At least one tag must be specified.' , 'red')
 		return -1
 	
-	commandId=DatabaseAddCommand(dbConnection, commandId, command, description)
-	db=dbConnection.cursor()
+	commandId=DatabaseAddCommand(commandId, command, description)
 	for tag in tags:
-		DatabaseAddTag(dbConnection, tag, commandId)
+		DatabaseAddTag(tag, commandId)
 	
 	return commandId
 
-def WriteCommandToFile( dbConnection, commandId, fileName): #Non controllo l'esistenza di commandId
+def WriteCommandToFile( commandId, fileName): #Non controllo l'esistenza di commandId
 	outputFile=open( fileName ,'w+')
-	dbConnection=OpenDatabase()
-	db=dbConnection.cursor()
 	(command, description)=db.execute('SELECT command, description FROM Commands WHERE rowid=?',(commandId,)).fetchone() 
 	outputFile.write(COMMAND_TXT+command+'\n')
 	outputFile.write(DESCRIPTION_TXT+description+'\n')
@@ -162,39 +154,6 @@ def WriteCommandToFile( dbConnection, commandId, fileName): #Non controllo l'esi
 	for (tag,) in allTags:
 		outputFile.write(tag+'\n')
 	outputFile.close()
-	
-def Install(): #Da cancellare
-	if os.path.exists(USER_DATA_FOLDER):
-		ColorPrint( PROGRAM_NAME+' is already installed.', 'red')
-		return
-	
-	os.makedirs(USER_DATA_FOLDER)
-	print( 'The user folder has been created.' )
-	
-	dbConnection=OpenDatabase()
-	db=dbConnection.cursor()
-	db.execute('''
-		CREATE TABLE IF NOT EXISTS Commands(
-			rowid INTEGER PRIMARY KEY AUTOINCREMENT,
-			command TEXT UNIQUE NOT NULL, 
-			description TEXT
-		)
-	''')
-	db.execute('''
-		CREATE TABLE IF NOT EXISTS Tags(
-			tag TEXT NOT NULL, 
-			commandId INTEGER, 
-			FOREIGN KEY(commandId)
-				REFERENCES Commands(rowid)
-				ON DELETE CASCADE
-				ON UPDATE CASCADE
-		)
-	''')
-	dbConnection.commit()
-	dbConnection.close()
-	print( 'Database has been successfully initialized.' )
-	
-	ColorPrint( 'Installation is complete.', 'green')
 
 def Uninstall(): #Da cancellare
 	if (not os.path.exists(USER_DATA_FOLDER)):
@@ -204,13 +163,14 @@ def Uninstall(): #Da cancellare
 	ColorPrint( PROGRAM_NAME+' has been uninstalled successfully.', 'green')
 	
 def QuietInstall():
+	global dbConnection, db
 	if os.path.exists(USER_DATA_FOLDER):
 		return
 	
 	os.makedirs(USER_DATA_FOLDER)
 	
-	dbConnection=OpenDatabase()
-	db=dbConnection.cursor()
+	OpenDatabase()
+	
 	db.execute('''
 		CREATE TABLE IF NOT EXISTS Commands(
 			rowid INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -249,8 +209,6 @@ def Import( fileName ): #Non controlla se sono già presenti i comandi
 	print( 'There are '+str(commandsNumber)+' commands to be imported:' )
 	inputFile.readline()
 	
-	dbConnection=OpenDatabase()
-	
 	for i in range(commandsNumber):
 		command=inputFile.readline().rstrip().lstrip()
 		description=inputFile.readline().rstrip().lstrip()
@@ -261,10 +219,10 @@ def Import( fileName ): #Non controlla se sono già presenti i comandi
 			ColorPrint( "The description of the "+str(i)+"-th command is shorter than 5 characters, then the command is skipped." ,'red' )
 			continue
 			
-		toBeAdded=CheckSimilarity(dbConnection, command, description)
+		toBeAdded=CheckSimilarity(command, description)
 		commandId=0
 		if toBeAdded:
-			commandId=DatabaseAddCommand(dbConnection, -1, command, description)
+			commandId=DatabaseAddCommand(-1, command, description)
 		
 		n=int(inputFile.readline())
 		for j in range(n):
@@ -274,21 +232,17 @@ def Import( fileName ): #Non controlla se sono già presenti i comandi
 			if not tag:
 				ColorPrint( "The "+str(j)+"-th tag of the "+str(i)+"-th command doesn't contain any characters, then the tag is skipped." , 'red')
 				continue
-			DatabaseAddTag(dbConnection, tag, commandId)
+			DatabaseAddTag(tag, commandId)
 		ColorPrint(command,'blue','The command ',' was'+('' if toBeAdded else ' not')+' added.')
 		if toBeAdded:
-			importedCommands+=1
+			importedCommandsNumber+=1
 		inputFile.readline()
 	
-	dbConnection.commit()
-	dbConnection.close()
 	inputFile.close();
-	ColorPrint(str(importedNumber)+' commands were imported from the file '+fileName+'.', 'green')
+	ColorPrint(str(importedCommandsNumber)+' commands were imported from the file '+fileName+'.', 'green')
 
 def Export( fileName ): 
 	outputFile=open(fileName,'w+')
-	dbConnection=OpenDatabase()
-	db=dbConnection.cursor()
 	allCommands=db.execute('SELECT rowid,command,description FROM Commands').fetchall()
 	outputFile.write(str(len(allCommands))+'\n\n')
 	for (commandId, command, description) in allCommands:
@@ -309,72 +263,54 @@ def Add():
 	
 	subprocess.check_call(['nano', '-t', '+1,'+str(len(COMMAND_TXT)+1), TMPFILE_PATH])
 	
-	dbConnection=OpenDatabase()
-	commandId=AddCommandFromFile(dbConnection, -1, TMPFILE_PATH)
+	commandId=AddCommandFromFile(-1, TMPFILE_PATH)
 	if commandId!=-1:
 		print( 'The following command has been added: ' )
-		PrintCommandFromDatabase(dbConnection, commandId, 1)
-	dbConnection.commit()
-	dbConnection.close()
+		PrintCommandFromDatabase(commandId, 1)
 	os.remove(TMPFILE_PATH)
 
 def Remove(commandId):
-	dbConnection=OpenDatabase()
-	if not DatabaseCommandExists(dbConnection, commandId):
+	if not DatabaseCommandExists(commandId):
 		ColorPrint( "The command "+str(commandId)+" doesn't exist." , 'red')
 		return 1
-	DatabaseRemoveCommand(dbConnection, commandId)
-	dbConnection.commit()
-	dbConnection.close()
+	DatabaseRemoveCommand(commandId)
 	ColorPrint( "The command "+str(commandId)+" has been successfully removed." , 'green')
 
 def Modify(commandId):
-	dbConnection=OpenDatabase()
-	if not DatabaseCommandExists(dbConnection, commandId):
+	if not DatabaseCommandExists(commandId):
 		ColorPrint( "The command "+str(commandId)+" doesn't exist." , 'red')
-		dbConnection.close()
 		return 1
 	
-	WriteCommandToFile(dbConnection, commandId, TMPFILE_PATH)
-	DatabaseRemoveCommand(dbConnection, commandId)
+	WriteCommandToFile(commandId, TMPFILE_PATH)
+	DatabaseRemoveCommand(commandId)
 	
 	subprocess.check_call(['nano', '-t', '+1,'+str(len(COMMAND_TXT)+1), TMPFILE_PATH])
-	commandId=AddCommandFromFile(dbConnection, commandId, TMPFILE_PATH)
+	commandId=AddCommandFromFile(commandId, TMPFILE_PATH)
 	
 	if commandId!=-1:
 		print( 'The command has been modified successfully: ' )
-		PrintCommandFromDatabase(dbConnection, commandId, 1)
+		PrintCommandFromDatabase(commandId, 1)
 	
-	dbConnection.commit()
-	dbConnection.close()
 	os.remove(TMPFILE_PATH)
 
 def Show():
-	dbConnection=OpenDatabase()
-	db=dbConnection.cursor()
 	allCommands=db.execute('SELECT rowid FROM Commands').fetchall()
 	
 	for (commandId,) in allCommands:
-		PrintCommandFromDatabase(dbConnection,commandId,1)
+		PrintCommandFromDatabase(commandId,1)
 		
 	if not allCommands:
 		ColorPrint( "There aren't commands saved. To add a command use "+PROGRAM_NAME+" --add", 'red' )
-	
-	dbConnection.close()
 
 def Search( commandTag ):
-	dbConnection=OpenDatabase()
-	db=dbConnection.cursor()
-	db.execute("SELECT commandId FROM Tags WHERE tag LIKE ?", (commandTag+'%',) )
-	commandIdList=set( db.fetchall() )
+	commandIdList=list( set( db.execute("SELECT commandId FROM Tags WHERE tag LIKE ?", (commandTag+'%',) ).fetchall()) )
 	
 	for (commandId,) in commandIdList:
-		PrintCommandFromDatabase(dbConnection, commandId, 0)
+		PrintCommandFromDatabase(commandId, 0)
 	
 	if not commandIdList:
 		ColorPrint( "No command matches the tag searched." , 'red' )
-	
-	dbConnection.close()
+
 
 #Magari aggiungere un database reset? Bah
 #Controllare la sicurezza del tutto e testare grandemente todos!
@@ -414,23 +350,31 @@ if __name__=='__main__':
 	
 	args=parser.parse_args()
 	
+	OpenDatabase()
+	
 	#~ if args.install:
 		#~ Install()
 	#~ elif args.uninstall:
 		#~ Uninstall()
 	if args.fileImport:
 		Import(args.fileImport[0])
+		dbConnection.commit()
 	elif args.fileExport:
 		Export(args.fileExport[0])
 	elif args.add:
 		Add()
+		dbConnection.commit()
 	elif args.remove != -1:
 		Remove(args.remove[0])
+		dbConnection.commit()
 	elif args.modify != -1:
 		Modify(args.modify[0])
+		dbConnection.commit()
 	elif args.show:
 		Show()
 	elif args.tag:
 		Search(args.tag)
 	elif args.debugClean:
+		#~ dbConnection.close()
 		Uninstall()
+	dbConnection.close()
