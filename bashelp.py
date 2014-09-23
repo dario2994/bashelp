@@ -18,6 +18,8 @@ TMPFILE_PATH='/tmp/'+PROGRAM_NAME+'_TempCommandFile.txt'
 #~ Costanti tutto maiuscolo+underscore
 #~ Funzioni in maiuscolo, il resto in camelcase con l'iniziale minuscola 
 #~ Tabelle in maiuscolo, colonne in camelcase con l'iniziale minuscola 
+#~ I comandi vengono sempre stampati nel colore di default della shell
+#~ Le comunicazioni buone sono verdi, quelle cattive sono rosse
 
 global dbConnection, db
 
@@ -40,7 +42,7 @@ def DatabaseAddCommand(commandId, command, description):
 	return commandId
 	
 def DatabaseRemoveCommand(commandId): #non controlla che commandId esista
-	db.execute('DELETE FROM Commands WHERE rowid=?',(commandId,)) #A cascata dovrebbe togliere tutti i tag corrispondenti
+	db.execute('DELETE FROM Commands WHERE rowid=?',(commandId,)) #ON DELETE CASCADE removes all corresponding tags
 	return 0
 	
 def DatabaseAddTag(tag, commandId): #non controlla che commandId esista
@@ -48,8 +50,7 @@ def DatabaseAddTag(tag, commandId): #non controlla che commandId esista
 	return db.lastrowid
 	
 def DatabaseCommandSimilarity(command): #Ci sono molte euristiche papabili per valutare la somiglianza! Questa è proprio di base
-	prefixLength=min(len(command)//2, 4)
-	#~ print( command[:prefixLength]+'%' )
+	prefixLength=min(len(command)//2, 7)
 	return db.execute("SELECT rowid,command,description FROM Commands WHERE command LIKE ?", (command[:prefixLength]+'%',)).fetchall()
 	
 
@@ -58,16 +59,9 @@ COLOR_BLUE='\033[94m' if ISTTY else ''
 COLOR_GREEN='\033[92m' if ISTTY else ''
 COLOR_RED='\033[91m' if ISTTY else ''
 COLOR_DEFAULT='\033[0m' if ISTTY else ''
-def ColorPrint( string , color, prefix='', suffix='' ): #Non è facile usarlo perchè spesso solo una parte va colorata!
-	if color=='red':
-		color=COLOR_RED
-	elif color=='blue':
-		color=COLOR_BLUE
-	elif color=='green':
-		color=COLOR_GREEN
-	elif color=='default':
-		color=COLOR_DEFAULT	
-	print(prefix+color+string+COLOR_DEFAULT+suffix)	
+colors={'blue': COLOR_BLUE, 'green': COLOR_GREEN, 'red': COLOR_RED, 'default': COLOR_DEFAULT}
+def ColorPrint( string , mainColor='default', prefix='', suffix='', backgroundColor='default'): 
+	print(colors[backgroundColor]+prefix+colors[mainColor]+string+colors[backgroundColor]+suffix+colors['default'])	
 	
 def PrintCommand(commandId, command, description='', tags=[], ShowTags=False):
 	ColorPrint( str(commandId), 'red', '', ': '+command )
@@ -80,7 +74,6 @@ def PrintCommand(commandId, command, description='', tags=[], ShowTags=False):
 		tagsPrefix='\tTags: '
 		tagsWrapper=textwrap.TextWrapper(initial_indent=tagsPrefix, subsequent_indent=' '*(len(textwrap.fill(tagsPrefix+'$',replace_whitespace=False))-1), width=90)
 		print( tagsWrapper.fill(', '.join(coloredTags)) )
-	print('')
 	
 def PrintCommandFromDatabase(commandId, ShowTags=False): #Non controlla che il comando esista
 	(command,description)=db.execute('SELECT command, description FROM Commands WHERE rowid=?',(commandId,)).fetchone()
@@ -95,17 +88,28 @@ def CheckSimilarity(command, description):
 	if not similarCommands:
 		return 1
 	
-	print("The command you want to add is:")
-	PrintCommand('TOADD', command, description)
-	print("but it seems similar to these commands:")
-	for (commandId1,command1,description1) in similarCommands:
-		PrintCommand(commandId1, command1, description1)
+	for (commandId2, command2, description2) in similarCommands:
+		if command2==command:
+			ColorPrint("You wanted to add the command:",'red')
+			PrintCommand('TOADD',command)
+			ColorPrint("but it is already saved, so it won't be added as a copy.", 'red')
+			return False
 	
-	userAnswer=input("Do you want to add it anyway? (yes,no) ").lstrip().rstrip()
+	print("The command you want to add is:\n")
+	PrintCommand('TOADD', command, description)
+	print("\nbut it seems similar to these commands:\n")
+	for (commandId2,command2,description2) in similarCommands:
+		PrintCommand(commandId2, command2, description2)
+	
+	userAnswer=input("\nDo you want to add it anyway? (yes,no) ").lstrip().rstrip()
 	while userAnswer!='yes' and userAnswer!='no' : #Magari dopo 3 volte uscire e amen
-		ColorPrint("The only possible answers are yes and no.",'red')
+		ColorPrint("\nThe only possible answers are yes and no.",'red')
 		userAnswer=input("Do you want to add it anyway? (yes,no) ").lstrip().rstrip()
-	return (userAnswer=='yes')
+	if userAnswer=='yes':
+		print('') #Newline
+		return True
+	else:
+		return False
 
 COMMAND_TXT='Command: '
 DESCRIPTION_TXT='Description: '
@@ -155,22 +159,19 @@ def WriteCommandToFile( commandId, fileName): #Non controllo l'esistenza di comm
 		outputFile.write(tag+'\n')
 	outputFile.close()
 
-def Uninstall(): #Da cancellare
+def Uninstall(): #debugClean
 	if (not os.path.exists(USER_DATA_FOLDER)):
 		ColorPrint( PROGRAM_NAME+' is not installed.', 'red' )
 		return
 	shutil.rmtree(USER_DATA_FOLDER)
 	ColorPrint( PROGRAM_NAME+' has been uninstalled successfully.', 'green')
 	
-def QuietInstall():
+def Install():
 	global dbConnection, db
-	if os.path.exists(USER_DATA_FOLDER):
-		return
 	
 	os.makedirs(USER_DATA_FOLDER)
 	
 	OpenDatabase()
-	
 	db.execute('''
 		CREATE TABLE IF NOT EXISTS Commands(
 			rowid INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -206,7 +207,7 @@ def Import( fileName ): #Non controlla se sono già presenti i comandi
 	inputFile=open( fileName )
 	commandsNumber=int( inputFile.readline() )
 	importedCommandsNumber=0
-	print( 'There are '+str(commandsNumber)+' commands to be imported:' )
+	print( 'There are '+str(commandsNumber)+' commands to be imported:\n' )
 	inputFile.readline()
 	
 	for i in range(commandsNumber):
@@ -233,7 +234,7 @@ def Import( fileName ): #Non controlla se sono già presenti i comandi
 				ColorPrint( "The "+str(j)+"-th tag of the "+str(i)+"-th command doesn't contain any characters, then the tag is skipped." , 'red')
 				continue
 			DatabaseAddTag(tag, commandId)
-		ColorPrint(command,'blue','The command ',' was'+('' if toBeAdded else ' not')+' added.')
+		ColorPrint(command,'default','The command ',' was'+('' if toBeAdded else ' not')+' added.\n', 'blue')
 		if toBeAdded:
 			importedCommandsNumber+=1
 		inputFile.readline()
@@ -254,6 +255,8 @@ def Export( fileName ):
 			outputFile.write(tag+'\n')
 		outputFile.write('\n')
 		print('Command '+str(commandId)+' has been written to the file.')
+		
+	outputFile.close()
 	ColorPrint('The whole database has been exported into '+fileName+'.', 'green')
 
 def Add():
@@ -273,8 +276,9 @@ def Remove(commandId):
 	if not DatabaseCommandExists(commandId):
 		ColorPrint( "The command "+str(commandId)+" doesn't exist." , 'red')
 		return 1
+	print( 'The following command has been removed:' )
+	PrintCommandFromDatabase(commandId, 1)
 	DatabaseRemoveCommand(commandId)
-	ColorPrint( "The command "+str(commandId)+" has been successfully removed." , 'green')
 
 def Modify(commandId):
 	if not DatabaseCommandExists(commandId):
@@ -298,6 +302,7 @@ def Show():
 	
 	for (commandId,) in allCommands:
 		PrintCommandFromDatabase(commandId,1)
+		print('') #Newline
 		
 	if not allCommands:
 		ColorPrint( "There aren't commands saved. To add a command use "+PROGRAM_NAME+" --add", 'red' )
@@ -312,19 +317,16 @@ def Search( commandTag ):
 		ColorPrint( "No command matches the tag searched." , 'red' )
 
 
-#Magari aggiungere un database reset? Bah
+#Magari migliorare colori ed a capo
 #Controllare la sicurezza del tutto e testare grandemente todos!
-#Mettere a posto gli a capo generali!
-#Da gestire meglio dbConnection!!
 
 if __name__=='__main__':
-	QuietInstall()
+	if not os.path.exists(USER_DATA_FOLDER):
+		Install()
 	
 	parser = argparse.ArgumentParser(description='Search all commands with the tag passed as an argument.')
 	group = parser.add_mutually_exclusive_group(required=True)
 	
-	#~ group.add_argument('--install', action='store_true', default=False,
-		#~ help='install '+PROGRAM_NAME)
 	group.add_argument('--debugClean', action='store_true', default=False,
 		help='uninstall '+PROGRAM_NAME)
 	
@@ -352,10 +354,6 @@ if __name__=='__main__':
 	
 	OpenDatabase()
 	
-	#~ if args.install:
-		#~ Install()
-	#~ elif args.uninstall:
-		#~ Uninstall()
 	if args.fileImport:
 		Import(args.fileImport[0])
 		dbConnection.commit()
@@ -375,6 +373,5 @@ if __name__=='__main__':
 	elif args.tag:
 		Search(args.tag)
 	elif args.debugClean:
-		#~ dbConnection.close()
 		Uninstall()
 	dbConnection.close()
