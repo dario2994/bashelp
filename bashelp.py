@@ -324,7 +324,7 @@ if __name__=='__main__':
 	if not os.path.exists(USER_DATA_FOLDER):
 		Install()
 	
-	parser = argparse.ArgumentParser(description='Search all commands with the tag passed as an argument.')
+	parser = argparse.ArgumentParser(description='Bookmark, tag and search your favourite shell commands.')
 	group = parser.add_mutually_exclusive_group(required=True)
 	
 	group.add_argument('--debugClean', action='store_true', default=False,
