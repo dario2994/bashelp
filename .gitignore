@@ -55,4 +55,4 @@ target/
 
 # Debian Package creation
 deb/
-bashelp-v*/
+bashelp-*/
