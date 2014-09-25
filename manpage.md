@@ -7,7 +7,8 @@ bashelp(1) -- bookmark, tag and search shell commands
 `bashelp` `-a`|`--add`<br>
 `bashelp`  `-r`|`--remove`, `-m`|`--modify` <tagId><br>
 `bashelp` `--import`, `--export` <fileName><br>
-`bashelp` `-s|--show`
+`bashelp` `-s|--show`<br>
+`bashelp` `-v|--version`, `-h|--help`
 
 ## DESCRIPTION
 
@@ -54,30 +55,35 @@ If <tag> is passed, no other option should be passed.
     
     The standard format used is:
         
-        number of commands
+     number of commands
         
-        previous commands...
-        last tag of command(N-1)
+     previous commands...<br>
+     last tag of command(N-1)
 
-        commandN
-        description of commandN
-        number of tags of commandN
-        1st tag of commandN
-        2nd tag of commandN
-        other tags...
-        last tag of commandN
+     commandN<br>
+     description of commandN<br>
+     number of tags of commandN<br>
+     1st tag of commandN<br>
+     2nd tag of commandN<br>
+     other tags...<br>
+     last tag of commandN
 
-        command(N+1)
-        following commands...
+     command(N+1)<br>
+     following commands...
 		
   * `--export` <fileName>:
     Export all commands saved in the database in the file identified by 
     fileName. It will use the same format as `--import`.
     
   * `-s`|`--show`:
-    Shows all commands saved in the database, with theirs ids and descriptions
+    Shows all commands saved in the database, with their ids and descriptions
     and tags.
-
+  
+  * `-v`|`--version`:
+    Prints the version of `bashelp` installed.
+    
+  * `-h`|`--help`:
+    Prints the synopsis and a short explanation of various options.
 ## FILES
 
 The database used to store commands is a `sqlite3` database (using foreign keys, 
