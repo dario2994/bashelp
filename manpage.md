@@ -3,10 +3,10 @@ bashelp(1) -- bookmark, tag and search shell commands
 
 ## SYNOPSIS
 
-`bashelp` <tag>
-`bashelp` `-a`|`--add`
-`bashelp`  `-r`|`--remove`, `-m`|`--modify` <tagId>
-`bashelp` `--import`, `--export` <fileName>
+`bashelp` <tag><br>
+`bashelp` `-a`|`--add`<br>
+`bashelp`  `-r`|`--remove`, `-m`|`--modify` <tagId><br>
+`bashelp` `--import`, `--export` <fileName><br>
 `bashelp` `-s|--show`
 
 ## DESCRIPTION
@@ -22,7 +22,7 @@ it, his id should be used.
 
 It is possible, through `--import` and `--export` options, to save in a simple
 txt file all those commands that were previously added to `bashelp` database and
-to load them again on a different machine.
+to load them again on a different `bashelp` installation.
 
 `bashelp` should work on any modern shell (bash and zsh).
 
@@ -51,20 +51,24 @@ If <tag> is passed, no other option should be passed.
   * `--import` <fileName>:
     Import commands, saved in a specific format, from the file identified by
     fileName.
+    
     The standard format used is:
-		Number of commands
-		
-		...
-		commandN
-		description of commandN
-		number of tags of commandN
-		1st tag of commandN
-		2nd tag of commandN
-		...
-		last tag of commandN
-		
-		command(N+1)
-		...
+        
+        number of commands
+        
+        previous commands...
+        last tag of command(N-1)
+
+        commandN
+        description of commandN
+        number of tags of commandN
+        1st tag of commandN
+        2nd tag of commandN
+        other tags...
+        last tag of commandN
+
+        command(N+1)
+        following commands...
 		
   * `--export` <fileName>:
     Export all commands saved in the database in the file identified by 

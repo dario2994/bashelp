@@ -56,3 +56,4 @@ target/
 # Debian Package creation
 deb/
 bashelp-*/
+bashelp_1.0*
