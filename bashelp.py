@@ -316,7 +316,6 @@ def Search( commandTag ):
 	if not commandIdList:
 		ColorPrint( "No command matches the tag searched." , 'red' )
 
-#usare docbook per la documentazione
 #Potrebbe chiamarsi anche memosh
 #Controllare la sicurezza del tutto e testare grandemente todos!
 
