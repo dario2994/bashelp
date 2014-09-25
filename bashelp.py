@@ -323,7 +323,7 @@ if __name__=='__main__':
 	if not os.path.exists(USER_DATA_FOLDER):
 		Install()
 	
-	parser = argparse.ArgumentParser(description='Bookmark, tag and search your favourite shell commands.')
+	parser = argparse.ArgumentParser(description='Bookmark, tag and search your favourite shell commands.', epilog='Please see bashelp(1) man pages for full documentation.')
 	group = parser.add_mutually_exclusive_group(required=True)
 	
 	group.add_argument('--debugClean', action='store_true', default=False,
@@ -341,7 +341,7 @@ if __name__=='__main__':
 	group.add_argument('--modify','-m', metavar='commandId', nargs=1, type=int, action='store', default=-1,
 		help='modify a command, passed its id')
 		
-	group.add_argument('--show', action='store_true', default=False,
+	group.add_argument('--show','-s', action='store_true', default=False,
 		help='show all commands saved, with descriptions and tags')
 	
 	group.add_argument('tag', metavar='TAG', action='store', nargs='?', default='', 
