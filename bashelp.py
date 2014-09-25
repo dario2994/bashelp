@@ -337,9 +337,9 @@ if __name__=='__main__':
 		
 	group.add_argument('--add','-a', action='store_true', default=False,
 		help='add a new command')
-	group.add_argument('--remove','-r','--delete','-d', metavar='commandId', nargs=1, type=int, action='store', default=-1,
+	group.add_argument('--remove','-r', metavar='commandId', nargs=1, type=int, action='store', default=-1,
 		help='remove a command, passed its id')
-	group.add_argument('--modify','-m','--change','-c', metavar='commandId', nargs=1, type=int, action='store', default=-1,
+	group.add_argument('--modify','-m', metavar='commandId', nargs=1, type=int, action='store', default=-1,
 		help='modify a command, passed its id')
 		
 	group.add_argument('--show', action='store_true', default=False,
