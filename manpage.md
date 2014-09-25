@@ -3,8 +3,11 @@ bashelp(1) -- bookmark, tag and search shell commands
 
 ## SYNOPSIS
 
-`bashelp` [`-a`|`--add`] [`-r`|`--remove` <tagId>] [`-m`|`--modify` <tagId>] 
-[`--import` <fileName>] [`--export` <fileName>] [`-s`|`--show`] <tag>
+`bashelp` <tag>
+`bashelp` `-a`|`--add`
+`bashelp`  `-r`|`--remove`, `-m`|`--modify` <tagId>
+`bashelp` `--import`, `--export` <fileName>
+`bashelp` `-s|--show`
 
 ## DESCRIPTION
 
@@ -27,8 +30,9 @@ to load them again on a different machine.
 
 Just one option per time is accepted. This reflects the fact that any option 
 directly relates to an action of the `bashelp`.
+
 When passing <tag> (`bashelp` <tag>) all commands which have the corresponding, 
-or a similar, tag will be showed.
+or a similar one, tag will be showed.
 If <tag> is passed, no other option should be passed.
 
   * `-a`|`--add`:
