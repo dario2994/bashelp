@@ -356,7 +356,7 @@ if __name__=='__main__':
 	group.add_argument('tag', metavar='TAG', action='store', nargs='?', default='', 
 		help='tag to be searched')
 		
-	group.add_argument('--version','-v' action='version', version=PROGRAM_NAME+' '+PROGRAM_VERSION)
+	group.add_argument('--version','-v', action='version', version=PROGRAM_NAME+' '+PROGRAM_VERSION)
 	
 	args=parser.parse_args()
 	
