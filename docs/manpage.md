@@ -8,11 +8,11 @@
 
 # SYNOPSIS
 
-**bashelp** *tag*\
-**bashelp** -a|--add\
-**bashelp**  -r|--remove, -m|--modify *tagId*\
-**bashelp** --import, --export *fileName*\
-**bashelp** -s|--show\
+**bashelp** *tag*  
+**bashelp** -a|--add  
+**bashelp**  -r|--remove, -m|--modify *tagId*  
+**bashelp** --import, --export *fileName*  
+**bashelp** -s|--show  
 **bashelp** -v|--version, -h|--help
 
 # DESCRIPTION
