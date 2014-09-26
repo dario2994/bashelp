@@ -318,6 +318,15 @@ def Search( commandTag ):
 
 #Potrebbe chiamarsi anche memosh
 #Controllare la sicurezza del tutto e testare grandemente todos!
+#Creare un sito di sharing -- ottimo ma esagerato
+#Creare una gui testuale con ncurses al posto di aprire nano -- ottimo ma difficile da implementare rispetto al reale giovamento
+#Aggiungere la possibilità di selezionare un comando e scriverlo senza dare invio -- ottimo ma come si fa a scrivere senza dare invio
+#Aggiungere il parametro opzionale basedir ad un comando -- buono e facile
+#Scrivendo solo bashelp parte la modalità interattiva -- fichissimo ma difficile da implementare
+#Trasformare flag in comandi, git style -- argparse lo fa con i subparser/subcommands
+#bashelp, shelp (con richiamo a shelf), memosh
+#Usare distutils per installare
+#Usare pandoc al posto di ronn
 
 if __name__=='__main__':
 	if not os.path.exists(USER_DATA_FOLDER):
