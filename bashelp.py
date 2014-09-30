@@ -327,6 +327,8 @@ def Search( commandTag ):
 #bashelp, shelp (con richiamo a shelf), memosh
 #Usare distutils per installare
 #Usare pandoc al posto di ronn
+#Usare bashelp search per cercare, impostando l'autocompletamento
+#La libreria click sembra fare questo e molto di più! 
 
 if __name__=='__main__':
 	if not os.path.exists(USER_DATA_FOLDER):
