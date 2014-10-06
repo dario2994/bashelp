@@ -102,7 +102,7 @@ def CheckSimilarity(command, description):
 		PrintCommand(commandId2, command2, description2)
 	
 	userAnswer=input("\nDo you want to add it anyway? (yes,no) ").lstrip().rstrip()
-	while userAnswer!='yes' and userAnswer!='no' : #Magari dopo 3 volte uscire e amen
+	while userAnswer!='yes' and userAnswer!='no' : #TODO: Exit after three attempts
 		ColorPrint("\nThe only possible answers are yes and no.",'red')
 		userAnswer=input("Do you want to add it anyway? (yes,no) ").lstrip().rstrip()
 	if userAnswer=='yes':
@@ -203,7 +203,7 @@ def Install():
 #
 #	command2
 #	...
-def Import( fileName ): #Non controlla se sono già presenti i comandi
+def Import( fileName ):
 	inputFile=open( fileName )
 	commandsNumber=int( inputFile.readline() )
 	importedCommandsNumber=0
@@ -316,7 +316,6 @@ def Search( commandTag ):
 	if not commandIdList:
 		ColorPrint( "No command matches the tag searched." , 'red' )
 
-#Potrebbe chiamarsi anche memosh
 #Controllare la sicurezza del tutto e testare grandemente todos!
 #Creare un sito di sharing -- ottimo ma esagerato
 #Creare una gui testuale con ncurses al posto di aprire nano -- ottimo ma difficile da implementare rispetto al reale giovamento
@@ -326,7 +325,6 @@ def Search( commandTag ):
 #Trasformare flag in comandi, git style -- argparse lo fa con i subparser/subcommands
 #bashelp, shelp (con richiamo a shelf), memosh
 #Usare distutils per installare
-#Usare pandoc al posto di ronn
 #Usare bashelp search per cercare, impostando l'autocompletamento
 #La libreria click sembra fare questo e molto di più! 
 
@@ -334,7 +332,7 @@ if __name__=='__main__':
 	if not os.path.exists(USER_DATA_FOLDER):
 		Install()
 	
-	parser = argparse.ArgumentParser(description='Bookmark, tag and search your favourite shell commands.', epilog='Please see bashelp(1) man pages for full documentation.')
+	parser = argparse.ArgumentParser(description='Bookmark, tag and search your favourite shell commands.', epilog='Please see '+PROGRAM_NAME+'(1) man pages for full documentation.')
 	group = parser.add_mutually_exclusive_group(required=True)
 	
 	group.add_argument('--debugClean', action='store_true', default=False,
