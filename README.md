@@ -18,7 +18,7 @@ It has been tested both on **bash** and **zsh** on the following linux distros: 
 Installation
 ============
 1. Clone the repository or just download the whole content in a folder on your pc.
-2. Execute 'install.sh' (double-clicking it or in a shell './install.sh').
+2. Execute in a shell 'sudo ./install.sh'.
 
 Now you have installed bashelp.
 To remove bashelp just execute 'uninstall.sh'.
