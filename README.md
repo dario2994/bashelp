@@ -10,7 +10,8 @@ To run **bashelp** you need to have installed:
 * python3 (>=3.2)
 * sqlite3 (>=3.6.19)
 
-To build the doc for bashelp you need:
+To build the docs for bashelp (not needed to install, as docs are 
+already builded) you need:
 * pandoc
 
 It has been tested both on **bash** and **zsh** on the following linux distros: *Ubuntu*, *Debian*, *Fedora*.
