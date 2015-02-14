@@ -14,7 +14,7 @@ To build the docs for bashelp (not needed to install or run, as docs are
 already builded) you need:
 * pandoc
 
-It has been tested both on **bash** and **zsh** on the following linux distros: *Ubuntu*, *Debian*, *Fedora*.
+It has been tested both on **bash** and **zsh** on the following linux distros: *Ubuntu*, *Debian*, *Fedora*, *Arch*.
 
 Installation
 ============
