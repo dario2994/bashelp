@@ -10,9 +10,8 @@ To install and run **bashelp** you need to have installed:
 * python3 (>=3.2)
 * sqlite3 (>=3.6.19)
 
-To build the docs for bashelp (not needed to install or run, as docs are 
-already builded) you need:
-* pandoc
+The docs for bashelp are written in Markdown and translated in the unix man language using pandoc. 
+Pandoc is NOT a dependency as the manpage is already built and does not have to be built during the installation.
 
 It has been tested both on **bash** and **zsh** on the following linux distros: *Ubuntu*, *Debian*, *Fedora*, *Arch*.
 
