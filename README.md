@@ -29,7 +29,7 @@ With
 ```bash
 bashelp -a
 ```
-you can interactively add a command to you shelf,
+you can interactively add a command to your shelf,
 then get it with
 ```bash
 bashelp CommandTag
