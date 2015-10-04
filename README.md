@@ -13,7 +13,7 @@ To install and run **bashelp** you need to have installed:
 The docs for bashelp are written in Markdown and translated in the unix man language using pandoc. 
 Pandoc is NOT a dependency as the manpage is already built and does not have to be built during the installation.
 
-It has been tested both on **bash** and **zsh** on the following linux distros: *Ubuntu*, *Debian*, *Fedora*, *Arch*.
+It has been tested both on **bash** and **zsh** on the following linux distros: *Ubuntu*, *Debian*, *Fedora*, *Arch*, *Gentoo*.
 
 Installation
 ============
