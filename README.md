@@ -36,7 +36,7 @@ bashelp CommandTag
 ```
 and in the end you remove the command with
 ```bash
-bashelp -remove CommandId
+bashelp --remove CommandId
 ```
 
 For further information you may use 
